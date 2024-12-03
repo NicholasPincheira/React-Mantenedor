@@ -1,50 +1,39 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import Cookies from 'js-cookie';
+import { createContext, useContext, useEffect, useState } from "react";
+import { auth } from "../firebaseConfig";
+import {
+  onAuthStateChanged,
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  signOut,
+} from "firebase/auth";
 
-interface AuthContextType {
-  isAuthenticated: boolean;
-  login: (username: string, password: string) => boolean;
-  logout: () => void;
-}
+const AuthContext = createContext<any>(null);
 
-const AuthContext = createContext<AuthContextType | null>(null);
+export const useAuth = () => useContext(AuthContext);
 
-export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
+  const [currentUser, setCurrentUser] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const token = Cookies.get('admin_token');
-    if (token) {
-      setIsAuthenticated(true);
-    }
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setCurrentUser(user);
+      setLoading(false);
+    });
+    return unsubscribe;
   }, []);
 
-  const login = (username: string, password: string) => {
-    // In a real app, this would be an API call
-    if (username === 'Nicholas Pincheira' && password === '123456123') {
-      Cookies.set('admin_token', 'dummy_token', { expires: 7 });
-      setIsAuthenticated(true);
-      return true;
-    }
-    return false;
-  };
+  const login = (email: string, password: string) =>
+    signInWithEmailAndPassword(auth, email, password);
 
-  const logout = () => {
-    Cookies.remove('admin_token');
-    setIsAuthenticated(false);
-  };
+  const register = (email: string, password: string) =>
+    createUserWithEmailAndPassword(auth, email, password);
+
+  const logout = () => signOut(auth);
 
   return (
-    <AuthContext.Provider value={{ isAuthenticated, login, logout }}>
-      {children}
+    <AuthContext.Provider value={{ currentUser, login, register, logout }}>
+      {!loading && children}
     </AuthContext.Provider>
   );
-}
-
-export function useAuth() {
-  const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  return context;
-}
+};

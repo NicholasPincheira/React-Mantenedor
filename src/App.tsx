@@ -1,11 +1,10 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
-import './index.css'
+import MainLayout from './components/MainLayout';
+import './index.css';
 
-import Navigation from './components/Navbar';
-
-//Pages
+// Páginas
 import Home from './pages/Home';
 import Login from './pages/Authentication/Login';
 import Register from './pages/Authentication/Register';
@@ -16,39 +15,72 @@ import Cards from './pages/Admin/Cards';
 function App() {
   return (
     <AuthProvider>
-      <BrowserRouter basename="/PortfolioProject">
+      <BrowserRouter>
         <Routes>
-          {/* Admin Routes */}
-          <Route path="/admin/sliders" element={<Sliders />} />
+          {/* Rutas Públicas */}
+          <Route
+            path="/"
+            element={
+              <MainLayout>
+                <Home />
+              </MainLayout>
+            }
+          />
+          <Route
+            path="/login"
+            element={
+              <MainLayout>
+                <Login />
+              </MainLayout>
+            }
+          />
+          <Route
+            path="/register"
+            element={
+              <MainLayout>
+                <Register />
+              </MainLayout>
+            }
+          />
+
+          {/* Rutas Protegidas */}
           <Route
             path="/admin/dashboard"
             element={
               <ProtectedRoute>
-                <Dashboard />
+                <MainLayout>
+                  <Dashboard />
+                </MainLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/sliders"
+            element={
+              <ProtectedRoute>
+                <MainLayout>
+                  <Sliders />
+                </MainLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/cards"
+            element={
+              <ProtectedRoute>
+                <MainLayout>
+                  <Cards />
+                </MainLayout>
               </ProtectedRoute>
             }
           />
 
-          {/* Public Routes */}
-          <Route
-            path="/*"
-            element={
-              <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800 text-white">
-                <Navigation />
-                <main className="container mx-auto px-4 pt-20 pb-12">
-                  <Routes>
-                    <Route path="/" element={<Home />} />
-                    <Route path="/login" element={<Login />} />
-                    <Route path="/register" element={<Register />} />
-                  </Routes>
-                </main>
-              </div>
-            }
-          />
+          {/* Redirección si la ruta no existe */}
+          <Route path="*" element={<Navigate to="/" />} />
         </Routes>
       </BrowserRouter>
     </AuthProvider>
   );
 }
 
-export default App
+export default App;
